@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Azure Service Flowchart SKU Family Selector</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --max-width: 1100px;
+    --sidebar-width: 320px;
+    --gap: 18px;
+    --bg: #fff;
+    --panel-bg: #f7f7f8;
+    --border: #ddd;
+    --primary: #0078d4;
+    --page-padding: 14px;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: var(--page-padding);
+    background: var(--bg);
+    color: #111;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    box-sizing: border-box;
+  }
+
+  /* Keep the main area centered with a max width */
+  .container {
+    width: 100%;
+    max-width: var(--max-width);
+    display: block; /* single column, main content centered */
+    gap: var(--gap);
+    box-sizing: border-box;
+    position: relative;
+    padding-top: 6px; /* small spacing from top so it doesn't collide with fixed legend */
+  }
+
+  .main {
+    margin: 0 auto;
+    max-width: 900px;
+  }
+
+  h1 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  #serviceSelector {
+    display: block;
+    margin: 8px auto 18px auto;
+    font-size: 15px;
+    padding: 6px 10px;
+    max-width: 360px;
+    width: 100%;
+  }
+
+  #flowchartWrapper {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 360px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .mermaid svg {
+    font-size: 14px;
+  }
+
+  .storage-flowchart .mermaid,
+  .apim-flowchart .mermaid,
+  .frontdoor-flowchart .mermaid {
+    display: flex;
+    justify-content: center;
+  }
+  .storage-flowchart .mermaid svg,
+  .apim-flowchart .mermaid svg,
+  .frontdoor-flowchart .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Legend is fixed to top-left corner of the viewport */
+  .sidebar {
+    position: fixed;
+    left: var(--page-padding);
+    top: var(--page-padding);
+    width: var(--sidebar-width);
+    min-width: 240px;
+    max-width: 360px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  .sidebar h3 {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+  }
+
+  #legendContent {
+    font-size: 13px;
+    color: #222;
+    white-space: pre-wrap;
+    min-height: 120px;
+    padding: 8px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e6e6e6;
+    box-sizing: border-box;
+  }
+
+  /* When hidden, keep it off-screen for accessibility (aria-hidden still used) */
+  .sidebar.hidden {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    /* On small screens, legend becomes full-width at the top and pushes content down */
+    .sidebar {
+      position: relative;
+      left: 0;
+      top: 0;
+      width: 100%;
+      max-width: none;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    body {
+      align-items: stretch;
+    }
+    .main {
+      margin-top: 6px;
+    }
+  }
+</style>
+</head>
+<body>
+  <!-- Legend fixed at top-left (hidden initially) -->
+  <aside id="legendSidebar" class="sidebar hidden" aria-label="Legend sidebar">
+    <h3 id="legendTitle">Legend</h3>
+    <div id="legendContent" role="region" aria-live="polite"></div>
+  </aside>
+
+  <div class="container" role="application">
+    <div class="main">
+      <h1>Azure Service Flowchart SKU Family Selector</h1>
+
+      <select id="serviceSelector" aria-label="Select Azure Service">
+        <option value="">-- Choose Azure Service --</option>
+        <option value="appservice">Azure App Service</option>
+        <option value="sql">Azure SQL</option>
+        <option value="storage">Azure Storage</option>
+        <option value="vm">Azure Virtual Machine (VM)</option>
+        <option value="apim">Azure API Management (APIM)</option>
+        <option value="frontdoor">Azure Front Door</option>
+      </select>
+
+      <div id="flowchartWrapper" aria-live="polite">
+        <div id="flowchart">
+          <p style="text-align:center;color:#666;">Select a service above to see the flowchart.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Mermaid config
+  const mermaidConfig = {
+    startOnLoad: false,
+    theme: 'default',
+    flowchart: {
+      useMaxWidth: true,
+      curve: 'linear',
+      nodeSpacing: 30,
+      rankSpacing: 40,
+      fontSize: 14
+    }
+  };
+  mermaid.initialize(mermaidConfig);
+
+  const selector = document.getElementById('serviceSelector');
+  const flowchartDiv = document.getElementById('flowchart');
+  const flowchartWrapper = document.getElementById('flowchartWrapper');
+
+  const legendContentDiv = document.getElementById('legendContent');
+  const legendTitle = document.getElementById('legendTitle');
+  const sidebar = document.getElementById('legendSidebar');
+
+  // Default per-service legend texts
+  const defaultLegends = {
+    "": `Select a service to see the flowchart. The legend here will change per service.`,
+    "appservice": `Exception-:
+- For any new Exception please reach out to Cloud Team (Jon)/Akansh
+
+Restriction-:
+- No use of Basic B0 SKU
+- Don't use Function App Consumption SKU for Public exposed.`,
+    "sql": `Exception-:
+- For any new Exception please reach out to Cloud Team (Jon)/Akansh
+
+Restriction-:
+- No DTU Basic Until its POC/Sandbox.`,
+    "storage": `Exception-:
+- For any new Exception please reach out to Cloud Team (Jon)/Akansh
+- RAGRS & ZRS are exception cases take approval 
+
+Restriction-:
+- Large Storage use Tiering (Hot, Cool, Cold & Archive tier)
+- Queue we use service bus.`,
+    "vm": `Exception-:
+- Experlogix Project- Already Approved
+- Agents- Outside scope of this
+- For any new Exception please reachout to Cloud Team (Jon)/Akansh
+
+Restriction-:
+- Sql (Don't use D2/D4)
+- Defender by default Enabled
+- Use Standard SSD for OS Drive.`,
+    "apim": `Exceptions-:
+- For any new Exception please reachout to Cloud Team (Jon)/Akansh
+
+Restriction-:
+- No Developer/Basic Family use in Prod.`,
+    "frontdoor": `Exceptions-:
+- For any new Exception please reachout to Cloud Team (Jon)/Akansh`
+  };
+
+  function loadLegendFor(serviceKey) {
+    return defaultLegends[serviceKey] || defaultLegends[""];
+  }
+
+  function setLegendFor(serviceKey) {
+    if (!serviceKey) {
+      sidebar.classList.add('hidden');
+      sidebar.setAttribute('aria-hidden', 'true');
+      return;
+    }
+
+    sidebar.classList.remove('hidden');
+    sidebar.setAttribute('aria-hidden', 'false');
+
+    const text = loadLegendFor(serviceKey);
+    legendContentDiv.textContent = text;
+    legendTitle.textContent = "Legend - " + serviceKey.toUpperCase();
+  }
+
+  const flowcharts = {
+    appservice: `
+      flowchart TD
+        Start["Start"]
+        LowTraffic["Is it for low traffic or dev/test?"]
+        ChooseB1_1["Choose B1 (Basic)"]
+        Autoscaling["Need autoscaling or staging slots?"]
+        ChooseB1_2["Choose B1 (Basic)"]
+        PeakPerf["Need peak performance (High CPU & Memory) or zone redundancy"]
+        ChoosePV3["Choose PV3 (PremiumV3)"]
+        ChooseS1["Choose S1 (Standard)"]
+        End["End"]
+        Start --> LowTraffic
+        LowTraffic -->|Yes| ChooseB1_1 --> End
+        LowTraffic -->|No| Autoscaling
+        Autoscaling -->|No| ChooseB1_2 --> End
+        Autoscaling -->|Yes| PeakPerf
+        PeakPerf -->|No| ChooseS1 --> End
+        PeakPerf -->|Yes| ChoosePV3 --> End
+    `,
+    sql: `
+      flowchart TD
+        Start["Start"]
+        POC["Is it a POC or sandbox?"]
+        ChooseDTUBasic["Choose DTU Basic"]
+        PredictableCost["Need predictable cost and bundled resources?"]
+        ChooseDTUStandard["Choose DTU Standard"]
+        FineGrainedScaling["Need fine-grained scaling, higher availability, or security?"]
+        ChoosevCore["Choose vCore"]
+        Reevaluate["Re-evaluate if DTU Standard is sufficient"]
+        End["End"]
+        Start --> POC
+        POC -->|Yes| ChooseDTUBasic --> End
+        POC -->|No| PredictableCost
+        PredictableCost -->|Yes| ChooseDTUStandard --> End
+        PredictableCost -->|No| FineGrainedScaling
+        FineGrainedScaling -->|Yes| ChoosevCore --> End
+        FineGrainedScaling -->|No| Reevaluate --> End
+    `,
+    storage: `
+      flowchart TD
+        Start["Start"]
+        LowLatency["Need low latency & high transactions?"]
+        Standard["Standard Storage"]
+        Premium["Premium Storage"]
+        Redundancy["Need zone or geo redundant storage?"]
+        Options["Suggested Options:<br>Standard ZRS, GZRS, Premium ZRS"]
+        End["End"]
+        Start --> LowLatency
+        LowLatency -->|No| Standard
+        LowLatency -->|Yes| Premium
+        Standard --> Redundancy
+        Premium --> Redundancy
+        Redundancy --> Options --> End
+    `,
+    vm: `
+      flowchart TD
+        Start["Start"]
+        Workload["What is the primary workload requirement?"]
+        Generic["Generic / Balanced needs"]
+        HighCPU["High CPU / Compute intensive"]
+        HighMem["High Memory / Memory intensive"]
+        ChooseD["Choose D-family (General purpose)"]
+        ChooseF["Choose F-family (Compute optimized)"]
+        ChooseE["Choose E-family (Memory optimized)"]
+        End["End"]
+        Start --> Workload
+        Workload -->Generic
+        Workload -->HighCPU
+        Workload -->HighMem
+        Generic --> ChooseD --> End
+        HighCPU --> ChooseF --> End
+        HighMem --> ChooseE --> End
+    `,
+    apim: `
+      flowchart TD
+        Start["Start"]
+        Environment["What is the environment?"]
+        NonProd["Non-Prod (Sandbox / Dev / Test / UAT)"]
+        Prod["Production"]
+        ChooseNonProd["Use APIM Premium - Non-Prod Shared Instance"]
+        ChooseProd["Use APIM Premium - Prod Shared Instance"]
+        End["End"]
+        Start --> Environment
+        Environment -->NonProd
+        Environment -->Prod
+        NonProd --> ChooseNonProd --> End
+        Prod --> ChooseProd --> End
+    `,
+    frontdoor: `
+      flowchart TD
+        Start["Start"]
+        Environment["What is the environment?"]
+        NonProd["Non-Prod (Sandbox / Dev / Test / UAT)"]
+        Prod["Production"]
+        ChooseNonProd["Use Front Door Premium - Non-Prod Shared Instance"]
+        ChooseProd["Use Front Door Premium - Prod Shared Instance"]
+        End["End"]
+        Start --> Environment
+        Environment --> NonProd
+        Environment --> Prod
+        NonProd --> ChooseNonProd --> End
+        Prod --> ChooseProd --> End
+    `
+  };
+
+  function renderFlowchart(serviceKey) {
+    if (!serviceKey) {
+      flowchartDiv.innerHTML = '<p style="text-align:center;color:#666;">Select a service above to see the flowchart.</p>';
+      flowchartWrapper.classList.remove('storage-flowchart','apim-flowchart','frontdoor-flowchart');
+      flowchartWrapper.style.border = 'none';
+      return;
+    }
+
+    flowchartWrapper.style.border = '1px solid var(--border)';
+
+    flowchartWrapper.classList.remove('storage-flowchart','apim-flowchart','frontdoor-flowchart');
+    if (serviceKey === 'storage') flowchartWrapper.classList.add('storage-flowchart');
+    if (serviceKey === 'apim') flowchartWrapper.classList.add('apim-flowchart');
+    if (serviceKey === 'frontdoor') flowchartWrapper.classList.add('frontdoor-flowchart');
+
+    const graph = flowcharts[serviceKey];
+    flowchartDiv.innerHTML = '<div class="mermaid">' + graph + '</div>';
+
+    const mermaids = flowchartDiv.querySelectorAll('.mermaid');
+    if (mermaids && mermaids.length) {
+      mermaid.initialize(mermaidConfig);
+      mermaid.init(undefined, mermaids);
+    }
+  }
+
+  selector.addEventListener('change', (e) => {
+    const svc = e.target.value;
+    renderFlowchart(svc);
+    setLegendFor(svc);
+  });
+
+  // Initialize page
+  (function init() {
+    flowchartWrapper.style.border = 'none';
+    sidebar.classList.add('hidden');
+    sidebar.setAttribute('aria-hidden', 'true');
+    setLegendFor(""); // ensures internal state is consistent
+  })();
+</script>
+</body>
+</html>
