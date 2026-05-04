@@ -1,6 +1,6 @@
 name: Platform request / Onboarding
 description: Request onboarding, platform integrations, or feature/support work.
-title: "[Platform] {{ short_title }}"
+title: "[Platform] PLEASE EDIT: enter short title here"
 labels: triage
 body:
   - type: dropdown
