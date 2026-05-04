@@ -22,7 +22,6 @@ body:
     id: description
     attributes:
       label: Description
-      description: Full details, links, or steps to reproduce
       required: true
   - type: dropdown
     id: priority
@@ -33,18 +32,3 @@ body:
         - Medium
         - High
         - Urgent
-  - type: input
-    id: team
-    attributes:
-      label: Requesting team / contact
-      placeholder: e.g., "Payments Team"
-  - type: input
-    id: desired_date
-    attributes:
-      label: Desired completion date (optional)
-      placeholder: YYYY-MM-DD
-  - type: textarea
-    id: links
-    attributes:
-      label: Links & repos
-      description: Add repo links, docs, screenshots
