@@ -8,21 +8,28 @@ body:
     id: request_type
     attributes:
       label: Request type
+      description: Choose the best category
       options:
         - Onboarding
         - Feature
         - Support
+
   - type: input
     id: short_title
     attributes:
       label: Short title
       placeholder: e.g., "Add CI/CD for payments service"
+    validations:
       required: true
+
   - type: textarea
     id: description
     attributes:
       label: Description
+      description: Full details, links, or steps to reproduce
+    validations:
       required: true
+
   - type: dropdown
     id: priority
     attributes:
