@@ -13,6 +13,8 @@ body:
         - Onboarding
         - Feature
         - Support
+    validations:
+      required: true
 
   - type: input
     id: short_title
