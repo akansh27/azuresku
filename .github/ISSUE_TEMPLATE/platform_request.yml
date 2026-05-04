@@ -3,7 +3,7 @@ description: Request onboarding, platform integrations, or feature/support work.
 title: "[Platform] {{ request_type }} - {{ short_title }}"
 labels: triage
 body:
-  - type: input
+  - type: dropdown
     id: request_type
     attributes:
       label: Request type
