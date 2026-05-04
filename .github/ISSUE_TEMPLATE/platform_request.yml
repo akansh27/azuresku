@@ -7,9 +7,11 @@ body:
     id: request_type
     attributes:
       label: Request type
-      placeholder: Onboarding / Feature / Support
-    validations:
-      required: true
+      description: Choose the best category
+      options:
+        - Onboarding
+        - Feature
+        - Support
 
   - type: input
     id: short_title
