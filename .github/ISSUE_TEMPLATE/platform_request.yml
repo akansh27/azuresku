@@ -3,15 +3,13 @@ description: Request onboarding, platform integrations, or feature/support work.
 title: "[Platform] {{ request_type }} - {{ short_title }}"
 labels: triage
 body:
-  - type: dropdown
+  - type: input
     id: request_type
     attributes:
       label: Request type
-      description: Choose the best category
-      options:
-        - Onboarding
-        - Feature
-        - Support
+      placeholder: Onboarding / Feature / Support
+    validations:
+      required: true
 
   - type: input
     id: short_title
