@@ -1,4 +1,3 @@
-# .github/ISSUE_TEMPLATE/platform_request.yml
 name: Platform request / Onboarding
 description: Request onboarding, platform integrations, or feature/support work.
 title: "[Platform] {{ request_type }} - {{ short_title }}"
@@ -13,8 +12,6 @@ body:
         - Onboarding
         - Feature
         - Support
-    validations:
-      required: true
 
   - type: input
     id: short_title
